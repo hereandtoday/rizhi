@@ -1440,7 +1440,22 @@
             try {
               const response = await fetch(`${WORKER_API_URL}/api/get-log/${log.name}`);
               const markdownContent = await response.text();
-              const htmlContent = marked.parse(markdownContent);
+              
+              // 提取正文内容（去掉标题和属性部分）
+              const lines = markdownContent.split('\n');
+              let contentStartIndex = -1;
+              
+              for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line === '' && i + 1 < lines.length && lines[i + 1].trim() !== '') {
+                  contentStartIndex = i + 1;
+                  break;
+                }
+              }
+              
+              const contentLines = contentStartIndex >= 0 ? lines.slice(contentStartIndex) : lines;
+              const contentMarkdown = contentLines.join('\n');
+              const htmlContent = marked.parse(contentMarkdown);
               
               html += `
                 <div class="timeline-row">
@@ -1449,7 +1464,7 @@
                     <div class="day">${log.date.split('-')[2]}</div>
                   </div>
                   <div class="timeline-card">
-                    <div class="log-item">
+                    <div class="log-item" onclick="loadLog('${log.name}')">
                       <div class="log-item-header">
                         <span class="log-item-company">${companyName}</span>
                         <span class="log-item-type">投资决策</span>
