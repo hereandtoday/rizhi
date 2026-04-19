@@ -1447,9 +1447,22 @@
               const response = await fetch(`${WORKER_API_URL}/api/get-log/${log.name}`);
               const markdownContent = await response.text();
               
-              // 提取正文内容（去掉标题和属性部分）
+              // 提取日志类型和正文内容
               const lines = markdownContent.split('\n');
+              let logType = '投资决策';
               let contentStartIndex = -1;
+              
+              // 从标题中提取日志类型
+              for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line.startsWith('#')) {
+                  // 标题格式: # 公司名称 - 日志类型
+                  const match = line.match(/#.*-\s*(.+)$/);
+                  if (match && match[1]) {
+                    logType = match[1].trim();
+                  }
+                }
+              }
               
               // 找到正文开始的位置（跳过标题和属性部分）
               for (let i = 0; i < lines.length; i++) {
@@ -1479,7 +1492,7 @@
                     <div class="log-item" onclick="loadLog('${log.name}')">
                       <div class="log-item-header">
                         <span class="log-item-company">${companyName}</span>
-                        <span class="log-item-type">投资决策</span>
+                        <span class="log-item-type">${logType}</span>
                         <span class="log-item-price">--元</span>
                       </div>
                       <div class="log-item-content">
