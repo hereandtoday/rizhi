@@ -542,7 +542,12 @@
       padding: 16px;
     }
     
-    .log-item-preview .md-content {
+    .log-item-content {
+      padding: 16px;
+    }
+    
+    .log-item-preview .md-content,
+    .log-item-content .md-content {
       color: #444;
       line-height: 1.7;
       font-size: 0.95em;
@@ -550,35 +555,47 @@
     
     .log-item-preview .md-content h1,
     .log-item-preview .md-content h2,
-    .log-item-preview .md-content h3 {
+    .log-item-preview .md-content h3,
+    .log-item-content .md-content h1,
+    .log-item-content .md-content h2,
+    .log-item-content .md-content h3 {
       margin: 16px 0 8px;
       color: #333;
     }
     
-    .log-item-preview .md-content h1 { font-size: 1.3em; }
-    .log-item-preview .md-content h2 { font-size: 1.2em; }
-    .log-item-preview .md-content h3 { font-size: 1.1em; }
+    .log-item-preview .md-content h1,
+    .log-item-content .md-content h1 { font-size: 1.3em; }
+    .log-item-preview .md-content h2,
+    .log-item-content .md-content h2 { font-size: 1.2em; }
+    .log-item-preview .md-content h3,
+    .log-item-content .md-content h3 { font-size: 1.1em; }
     
-    .log-item-preview .md-content p {
+    .log-item-preview .md-content p,
+    .log-item-content .md-content p {
       margin: 8px 0;
     }
     
     .log-item-preview .md-content ul,
-    .log-item-preview .md-content ol {
+    .log-item-preview .md-content ol,
+    .log-item-content .md-content ul,
+    .log-item-content .md-content ol {
       margin: 8px 0;
       padding-left: 24px;
     }
     
-    .log-item-preview .md-content li {
+    .log-item-preview .md-content li,
+    .log-item-content .md-content li {
       margin: 4px 0;
     }
     
-    .log-item-preview .md-content strong {
+    .log-item-preview .md-content strong,
+    .log-item-content .md-content strong {
       color: #333;
       font-weight: 600;
     }
     
-    .log-item-preview .md-content code {
+    .log-item-preview .md-content code,
+    .log-item-content .md-content code {
       background: #f5f5f5;
       padding: 2px 6px;
       border-radius: 4px;
@@ -586,85 +603,106 @@
       font-size: 0.9em;
     }
     
-    .log-item-preview .md-content pre {
+    .log-item-preview .md-content pre,
+    .log-item-content .md-content pre {
       background: #f5f5f5;
       padding: 12px;
       border-radius: 8px;
       overflow-x: auto;
     }
     
-    .log-item-preview .md-content pre code {
+    .log-item-preview .md-content pre code,
+    .log-item-content .md-content pre code {
       background: none;
       padding: 0;
     }
     
-    .log-item-preview .md-content blockquote {
+    .log-item-preview .md-content blockquote,
+    .log-item-content .md-content blockquote {
       border-left: 3px solid #667eea;
       padding-left: 12px;
       margin: 12px 0;
       color: #666;
     }
     
-    .log-item-preview .md-content hr {
+    .log-item-preview .md-content hr,
+    .log-item-content .md-content hr {
       border: none;
       border-top: 1px solid #e0e0e0;
       margin: 16px 0;
     }
     
-    .log-item-preview .md-content table {
+    .log-item-preview .md-content table,
+    .log-item-content .md-content table {
       border-collapse: collapse;
       width: 100%;
       margin: 12px 0;
     }
     
     .log-item-preview .md-content table th,
-    .log-item-preview .md-content table td {
+    .log-item-preview .md-content table td,
+    .log-item-content .md-content table th,
+    .log-item-content .md-content table td {
       border: 1px solid #e0e0e0;
       padding: 8px 12px;
       text-align: left;
     }
     
-    .log-item-preview .md-content table th {
+    .log-item-preview .md-content table th,
+    .log-item-content .md-content table th {
       background: #f5f5f5;
     }
     
     /* Markdown渲染样式 */
-    .log-item-preview .md-content {
+    .log-item-preview .md-content,
+    .log-item-content .md-content {
       color: #444;
       line-height: 1.7;
     }
     
     .log-item-preview .md-content h1,
     .log-item-preview .md-content h2,
-    .log-item-preview .md-content h3 {
+    .log-item-preview .md-content h3,
+    .log-item-content .md-content h1,
+    .log-item-content .md-content h2,
+    .log-item-content .md-content h3 {
       margin: 12px 0 8px;
       color: #333;
     }
     
-    .log-item-preview .md-content h1 { font-size: 1.3em; }
-    .log-item-preview .md-content h2 { font-size: 1.2em; }
-    .log-item-preview .md-content h3 { font-size: 1.1em; }
+    .log-item-preview .md-content h1,
+    .log-item-content .md-content h1 { font-size: 1.3em; }
+    .log-item-preview .md-content h2,
+    .log-item-content .md-content h2 { font-size: 1.2em; }
+    .log-item-preview .md-content h3,
+    .log-item-content .md-content h3 { font-size: 1.1em; }
     
-    .log-item-preview .md-content p {
+    .log-item-preview .md-content p,
+    .log-item-content .md-content p {
       margin: 8px 0;
     }
     
     .log-item-preview .md-content ul,
-    .log-item-preview .md-content ol {
+    .log-item-preview .md-content ol,
+    .log-item-content .md-content ul,
+    .log-item-content .md-content ol {
       margin: 8px 0;
       padding-left: 20px;
     }
     
-    .log-item-preview .md-content li {
+    .log-item-preview .md-content li,
+    .log-item-content .md-content li {
       margin: 4px 0;
     }
     
-    .log-item-preview .md-content strong {
+    .log-item-preview .md-content strong,
+    .log-item-content .md-content strong {
       color: #333;
       font-weight: 600;
     }
     
-    .log-item-preview .md-content code {
+    .log-item-preview .md-content code,
+    .log-item-content .md-content code {
       background: #f0f0f0;
       padding: 2px 6px;
       border-radius: 4px;
@@ -672,14 +710,16 @@
       font-size: 0.9em;
     }
     
-    .log-item-preview .md-content blockquote {
+    .log-item-preview .md-content blockquote,
+    .log-item-content .md-content blockquote {
       border-left: 3px solid #667eea;
       padding-left: 12px;
       margin: 8px 0;
       color: #666;
     }
     
-    .log-item-preview .md-content hr {
+    .log-item-preview .md-content hr,
+    .log-item-content .md-content hr {
       border: none;
       border-top: 1px solid #e0e0e0;
       margin: 12px 0;
@@ -1320,7 +1360,15 @@
         const result = await response.json();
         
         if (result.success) {
-          renderTimeline(result.logs);
+          let filteredLogs = result.logs;
+          
+          // 如果有选中的公司，筛选出该公司的日志
+          if (selectors.timeline.selected) {
+            const selectedCode = selectors.timeline.selected.code;
+            filteredLogs = result.logs.filter(log => log.name.startsWith(selectedCode + '/'));
+          }
+          
+          await renderTimeline(filteredLogs);
         } else {
           document.getElementById('timelineResult').innerHTML = '<div class="alert alert-error">加载日志失败</div>';
         }
@@ -1331,7 +1379,7 @@
     }
     
     // 渲染时间线
-    function renderTimeline(logs) {
+    async function renderTimeline(logs) {
       // 按日期分组日志
       const groupedLogs = {};
       
@@ -1354,7 +1402,7 @@
       // 渲染时间线
       let html = '';
       
-      Object.keys(groupedLogs).sort().reverse().forEach(year => {
+      for (const year of Object.keys(groupedLogs).sort().reverse()) {
         const yearLogs = groupedLogs[year];
         const yearLogCount = Object.values(yearLogs).reduce((sum, monthLogs) => sum + monthLogs.length, 0);
         
@@ -1367,7 +1415,7 @@
             </div>
         `;
         
-        Object.keys(yearLogs).sort().reverse().forEach(month => {
+        for (const month of Object.keys(yearLogs).sort().reverse()) {
           const monthLogs = yearLogs[month];
           
           html += `
@@ -1381,48 +1429,78 @@
               <div class="timeline-month-body">
           `;
           
-          monthLogs.forEach(log => {
+          for (const log of monthLogs) {
             // 解析文件名获取公司信息和类型
             const parts = log.name.split('/');
             const code = parts[0];
             const stock = HS300_STOCKS.find(s => s.code === code);
             const companyName = stock ? stock.name : code;
             
-            html += `
-              <div class="timeline-row">
-                <div class="timeline-dot"></div>
-                <div class="timeline-date-label">
-                  <div class="day">${log.date.split('-')[2]}</div>
-                </div>
-                <div class="timeline-card">
-                  <div class="log-item" onclick="loadLog('${log.name}')">
-                    <div class="log-item-header">
-                      <span class="log-item-company">${companyName}</span>
-                      <span class="log-item-type">投资决策</span>
-                      <span class="log-item-price">--元</span>
-                      <span class="log-item-title">${log.name}</span>
-                    </div>
-                    <div class="log-item-preview">
-                      <div class="md-content">
-                        <p>点击查看详情</p>
+            // 加载并渲染Markdown内容
+            try {
+              const response = await fetch(`${WORKER_API_URL}/api/get-log/${log.name}`);
+              const markdownContent = await response.text();
+              const htmlContent = marked.parse(markdownContent);
+              
+              html += `
+                <div class="timeline-row">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-date-label">
+                    <div class="day">${log.date.split('-')[2]}</div>
+                  </div>
+                  <div class="timeline-card">
+                    <div class="log-item">
+                      <div class="log-item-header">
+                        <span class="log-item-company">${companyName}</span>
+                        <span class="log-item-type">投资决策</span>
+                        <span class="log-item-price">--元</span>
+                      </div>
+                      <div class="log-item-content">
+                        <div class="md-content">
+                          ${htmlContent}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            `;
-          });
+              `;
+            } catch (error) {
+              console.error('加载日志内容失败:', error);
+              html += `
+                <div class="timeline-row">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-date-label">
+                    <div class="day">${log.date.split('-')[2]}</div>
+                  </div>
+                  <div class="timeline-card">
+                    <div class="log-item">
+                      <div class="log-item-header">
+                        <span class="log-item-company">${companyName}</span>
+                        <span class="log-item-type">投资决策</span>
+                        <span class="log-item-price">--元</span>
+                      </div>
+                      <div class="log-item-content">
+                        <div class="md-content">
+                          <p>加载失败</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
+          }
           
           html += `
               </div>
             </div>
           `;
-        });
+        }
         
         html += `
           </div>
         `;
-      });
+      }
       
       if (html === '') {
         html = '<div class="empty-state"><div class="icon">📝</div><p>暂无投资日志</p></div>';
