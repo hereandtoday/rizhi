@@ -1656,70 +1656,33 @@
     }
     
     // 加载自选股列表
-    async function loadWatchlist() {
-      if (!rootDirHandle) return;
+    function loadWatchlist() {
+      updateWatchlistCache();
       
-      try {
-        const investDirHandle = await getInvestDir();
-        const watchlistFileHandle = await investDirHandle.getFileHandle('自选股列表.md');
-        const file = await watchlistFileHandle.getFile();
-        const content = await file.text();
-        
-        // 解析自选股
-        const lines = content.split('\n');
-        const stocks = [];
-        
-        lines.forEach(line => {
-          const match = line.match(/^-\s*(.+)\((\d{6,8})\)/);
-          if (match) {
-            stocks.push({ name: match[1], code: match[2] });
-          }
-        });
-        
-        // 更新缓存
-        cachedWatchlist = stocks.map(stock => {
-          const globalStock = HS300_STOCKS.find(s => s.code === stock.code);
-          return {
-            ...stock,
-            pinyin: globalStock ? globalStock.pinyin : stock.name.charAt(0)
-          };
-        });
-        
-        // 渲染列表
-        const display = document.getElementById('watchlistDisplay');
-        if (stocks.length === 0) {
-          display.innerHTML = '<div class="watchlist-empty">暂无自选股，请搜索添加</div>';
-        } else {
-          let html = '<div style="margin-bottom:8px;color:#888;">共 ' + stocks.length + ' 只自选股，点击公司名可查看其日志</div>';
-          html += '<div class="watchlist-grid">';
-          stocks.forEach(stock => {
-            html += `
-              <div class="watchlist-item">
-                <div style="cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" onclick="goToTimelineAndFilter('${stock.name}', '${stock.code}')">
-                  <span class="watchlist-item-name" style="color:#667eea;text-decoration:underline;">${stock.name}</span>
-                  <span class="watchlist-item-code">(${stock.code})</span>
-                </div>
-                <button class="btn btn-danger btn-sm" style="padding:2px 6px;font-size:0.7em;flex-shrink:0;margin-left:4px;" onclick="removeFromWatchlist('${stock.name}', '${stock.code}')">×</button>
+      const display = document.getElementById('watchlistDisplay');
+      if (cachedWatchlist.length === 0) {
+        display.innerHTML = '<div class="watchlist-empty">暂无自选股，请搜索添加</div>';
+      } else {
+        let html = '<div style="margin-bottom:8px;color:#888;">共 ' + cachedWatchlist.length + ' 只自选股，点击公司名可查看其日志</div>';
+        html += '<div class="watchlist-grid">';
+        cachedWatchlist.forEach(stock => {
+          html += `
+            <div class="watchlist-item">
+              <div style="cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" onclick="goToTimelineAndFilter('${escapeAttr(stock.name)}', '${stock.code}')">
+                <span class="watchlist-item-name" style="color:#667eea;text-decoration:underline;">${escapeHtml(stock.name)}</span>
+                <span class="watchlist-item-code">(${stock.code})</span>
               </div>
-            `;
-          });
-          html += '</div>';
-          display.innerHTML = html;
-        }
-        
-      } catch (err) {
-        console.error('加载自选股失败:', err);
+              <button class="btn btn-danger btn-sm" style="padding:2px 6px;font-size:0.7em;flex-shrink:0;margin-left:4px;" onclick="removeFromWatchlist('${escapeAttr(stock.name)}', '${stock.code}')">×</button>
+            </div>
+          `;
+        });
+        html += '</div>';
+        display.innerHTML = html;
       }
     }
     
     // 添加到自选股
-    async function addToWatchlist() {
-      if (!rootDirHandle) {
-        document.getElementById('watchlistResult').innerHTML = 
-          '<div class="alert alert-error">请先进行初始化</div>';
-        return;
-      }
-      
+    function addToWatchlist() {
       const stock = selectors.watchlist.selected;
       if (!stock) {
         document.getElementById('watchlistResult').innerHTML = 
@@ -1727,91 +1690,58 @@
         return;
       }
       
-      try {
-        const investDirHandle = await getInvestDir();
-        const watchlistFileHandle = await investDirHandle.getFileHandle('自选股列表.md');
-        const file = await watchlistFileHandle.getFile();
-        let content = await file.text();
-        
-        // 检查是否已存在
-        const stockEntry = `- ${stock.name}(${stock.code})`;
-        if (content.includes(stockEntry)) {
-          document.getElementById('watchlistResult').innerHTML = 
-            '<div class="alert alert-info">' + stock.name + ' 已在自选股列表中</div>';
-          return;
-        }
-        
-        // 添加到文件
-        content += stockEntry + '\n';
-        const writable = await watchlistFileHandle.createWritable();
-        await writable.write(content);
-        await writable.close();
-        
+      updateWatchlistCache();
+      
+      // 检查是否已存在
+      const exists = cachedWatchlist.some(s => s.code === stock.code);
+      if (exists) {
         document.getElementById('watchlistResult').innerHTML = 
-          '<div class="alert alert-success">成功添加 ' + stock.name + ' 到自选股</div>';
-        
-        // 清空选择
-        clearSelection('watchlist');
-        
-        // 更新自选股缓存
-        await updateWatchlistCache();
-        
-        // 刷新列表
-        loadWatchlist();
-        
-      } catch (err) {
-        document.getElementById('watchlistResult').innerHTML = 
-          '<div class="alert alert-error">添加失败：' + err.message + '</div>';
+          '<div class="alert alert-info">' + stock.name + ' 已在自选股列表中</div>';
+        return;
       }
+      
+      // 添加到缓存
+      cachedWatchlist.push(stock);
+      
+      // 保存到本地存储
+      localStorage.setItem('watchlist', JSON.stringify(cachedWatchlist));
+      
+      document.getElementById('watchlistResult').innerHTML = 
+        '<div class="alert alert-success">成功添加 ' + stock.name + ' 到自选股</div>';
+      
+      // 清空选择
+      clearSelection('watchlist');
+      
+      // 刷新列表
+      loadWatchlist();
     }
     
     // 从自选股中删除
-    async function removeFromWatchlist(name, code) {
+    function removeFromWatchlist(name, code) {
       if (!confirm('确定要将 ' + name + ' 从自选股中移除吗？')) return;
       
-      try {
-        const investDirHandle = await getInvestDir();
-        const watchlistFileHandle = await investDirHandle.getFileHandle('自选股列表.md');
-        const file = await watchlistFileHandle.getFile();
-        let content = await file.text();
-        
-        // 删除对应行
-        const stockEntry = `- ${name}(${code})`;
-        content = content.replace(stockEntry + '\n', '');
-        
-        const writable = await watchlistFileHandle.createWritable();
-        await writable.write(content);
-        await writable.close();
-        
-        document.getElementById('watchlistResult').innerHTML = 
-          '<div class="alert alert-success">已将 ' + name + ' 从自选股中移除</div>';
-        
-        // 更新自选股缓存
-        await updateWatchlistCache();
-        
-        // 刷新列表
-        loadWatchlist();
-        
-      } catch (err) {
-        document.getElementById('watchlistResult').innerHTML = 
-          '<div class="alert alert-error">删除失败：' + err.message + '</div>';
-      }
+      updateWatchlistCache();
+      
+      // 删除对应股票
+      cachedWatchlist = cachedWatchlist.filter(s => s.code !== code);
+      
+      // 保存到本地存储
+      localStorage.setItem('watchlist', JSON.stringify(cachedWatchlist));
+      
+      document.getElementById('watchlistResult').innerHTML = 
+        '<div class="alert alert-success">已将 ' + name + ' 从自选股中移除</div>';
+      
+      // 刷新列表
+      loadWatchlist();
     }
     
     // 保存日志
     async function saveLog() {
-      if (!rootDirHandle) {
-        document.getElementById('logResult').innerHTML = 
-          '<div class="alert alert-error">请先选择工作目录</div>';
-        return;
-      }
-      
       const stock = selectors.log.selected;
       const logType = document.getElementById('logType').value;
       const logPrice = document.getElementById('logPrice').value;
       const logContent = document.getElementById('logContent').value.trim();
       
-      // 验证输入
       if (!stock) {
         document.getElementById('logResult').innerHTML = 
           '<div class="alert alert-error">请先选择股票</div>';
@@ -1824,11 +1754,9 @@
         return;
       }
       
-      // 获取记录时间（用户可选择，默认当前时间）
       const datetimeVal = document.getElementById('logDatetime').value;
       let logDate, logTime;
       if (datetimeVal) {
-        // datetime-local format: "2026-04-18T14:30:22"
         const [d, t] = datetimeVal.split('T');
         logDate = d;
         logTime = t;
@@ -1843,44 +1771,32 @@
       }
       
       try {
-        const investDirHandle = await getInvestDir();
+        const response = await fetch(`${WORKER_API_URL}/api/save-log`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            content: logContent,
+            company: stock.name,
+            code: stock.code,
+            type: logType,
+            datetime: logDate + ' ' + logTime,
+            price: logPrice
+          })
+        });
         
-        // 创建公司文件夹
-        const companyName = stock.name + '(' + stock.code + ')';
-        const companyDirHandle = await investDirHandle.getDirectoryHandle(companyName, { create: true });
-        
-        // 生成文件名（使用时间戳确保不覆盖）
-        // 格式：yyyy-MM-dd_类型_HH-mm-ss-SSS.md
-        const [year, month, day] = logDate.split('-');
-        const [hour, minute, second] = logTime.split(':');
-        const timestamp = Date.now() % 1000;
-        const fileName = `${year}-${month}-${day}_${logType}_${hour}-${minute}-${second}-${String(timestamp).padStart(3, '0')}.md`;
-        
-        // 生成文件内容
-        let fileContent = '# ' + logType + '\n\n';
-        fileContent += '公司：' + companyName + '\n';
-        fileContent += '时间：' + logDate + ' ' + logTime + '\n';
-        if (logPrice) {
-          fileContent += '股价：' + logPrice + '\n';
+        const result = await response.json();
+        if (result.success) {
+          document.getElementById('logResult').innerHTML = 
+            '<div class="alert alert-success">已提交</div>';
+          
+          clearLogForm();
+          switchTab('timeline');
+        } else {
+          document.getElementById('logResult').innerHTML = 
+            '<div class="alert alert-error">保存失败: ' + (result.message || '未知错误') + '</div>';
         }
-        fileContent += '\n---\n\n';
-        fileContent += logContent;
-        
-        // 保存文件
-        const fileHandle = await companyDirHandle.getFileHandle(fileName, { create: true });
-        const writable = await fileHandle.createWritable();
-        await writable.write(fileContent);
-        await writable.close();
-        
-        document.getElementById('logResult').innerHTML = 
-          '<div class="alert alert-success">已提交</div>';
-        
-        // 清空表单
-        clearLogForm();
-        
-        // 跳转到时间线页面并加载
-        switchTab('timeline');
-        
       } catch (err) {
         document.getElementById('logResult').innerHTML = 
           '<div class="alert alert-error">保存失败：' + err.message + '</div>';
@@ -1993,59 +1909,6 @@
       document.getElementById('timelineResult').innerHTML = html;
     }
 
-    // 加载所有日志（时间线默认显示）
-    async function loadAllLogs() {
-      if (!rootDirHandle) {
-        document.getElementById('timelineResult').innerHTML = 
-          '<div class="alert alert-error">请先选择工作目录</div>';
-        return;
-      }
-      
-      try {
-        const investDirHandle = await getInvestDir();
-        let allLogs = [];
-        
-        for await (const entry of investDirHandle.values()) {
-          if (entry.kind === 'directory') {
-            const companyName = entry.name;
-            try {
-              const companyDirHandle = await investDirHandle.getDirectoryHandle(companyName);
-              for await (const fileEntry of companyDirHandle.values()) {
-                if (fileEntry.kind === 'file' && fileEntry.name.endsWith('.md')) {
-                  const fileHandle = await companyDirHandle.getFileHandle(fileEntry.name);
-                  const file = await fileHandle.getFile();
-                  const content = await file.text();
-                  const typeMatch = fileEntry.name.match(/_(.+?)_\d/);
-                  const logType = typeMatch ? typeMatch[1] : '';
-                  allLogs.push({
-                    name: fileEntry.name,
-                    company: companyName,
-                    fullContent: content,
-                    logType: logType
-                  });
-                }
-              }
-            } catch (e) {}
-          }
-        }
-        
-        allLogs.sort((a, b) => b.name.localeCompare(a.name));
-        
-        if (allLogs.length === 0) {
-          document.getElementById('timelineResult').innerHTML = 
-            '<div class="empty-state"><div class="icon">📝</div><p>暂无日志记录</p><p style="margin-top:10px;font-size:0.9em;">去"写投资日志"页面创建第一篇日志吧</p></div>';
-          return;
-        }
-        
-        const headerHtml = '<div style="margin-bottom:12px;color:#888;font-size:0.9em;">共 ' + allLogs.length + ' 篇日志（' + new Set(allLogs.map(l => l.company)).size + ' 家公司）</div>';
-        renderGroupedTimeline(allLogs, headerHtml);
-        
-      } catch (err) {
-        document.getElementById('timelineResult').innerHTML = 
-          '<div class="alert alert-error">加载失败：' + err.message + '</div>';
-      }
-    }
-    
     // HTML转义辅助函数
     function escapeHtml(str) {
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -2054,159 +1917,39 @@
       return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
     
-    // 加载指定公司的时间线
-    async function loadTimeline() {
-      if (!rootDirHandle) {
-        document.getElementById('timelineResult').innerHTML = 
-          '<div class="alert alert-error">请先选择工作目录</div>';
-        return;
-      }
-      
-      const stock = selectors.timeline.selected;
-      if (!stock) {
-        loadAllLogs();
-        return;
-      }
-      
-      try {
-        const investDirHandle = await getInvestDir();
-        const companyName = stock.name + '(' + stock.code + ')';
-        
-        let logs = [];
-        
-        try {
-          const companyDirHandle = await investDirHandle.getDirectoryHandle(companyName);
-          
-          for await (const entry of companyDirHandle.values()) {
-            if (entry.kind === 'file' && entry.name.endsWith('.md')) {
-              const fileHandle = await companyDirHandle.getFileHandle(entry.name);
-              const file = await fileHandle.getFile();
-              const content = await file.text();
-              
-              const typeMatch = entry.name.match(/_(.+?)_\d/);
-              const logType = typeMatch ? typeMatch[1] : '';
-              
-              logs.push({
-                name: entry.name,
-                company: companyName,
-                fullContent: content,
-                logType: logType
-              });
-            }
-          }
-        } catch (e) {}
-        
-        logs.sort((a, b) => b.name.localeCompare(a.name));
-        
-        if (logs.length === 0) {
-          document.getElementById('timelineResult').innerHTML = 
-            '<div class="empty-state"><div class="icon">📝</div><p>' + escapeHtml(stock.name) + ' 暂无日志记录</p><p style="margin-top:10px;font-size:0.9em;">去"写投资日志"页面为该公司创建第一篇日志</p></div>';
-          return;
-        }
-        
-        const headerHtml = '<div style="margin-bottom:12px;color:#888;font-size:0.9em;">' + escapeHtml(stock.name) + ' 共有 ' + logs.length + ' 篇日志 <span style="color:#667eea;cursor:pointer;" onclick="loadAllLogs()">(查看全部)</span></div>';
-        renderGroupedTimeline(logs, headerHtml);
-        
-      } catch (err) {
-        document.getElementById('timelineResult').innerHTML = 
-          '<div class="alert alert-error">加载失败：' + err.message + '</div>';
-      }
-    }
-    
     // 打开删除确认弹窗
     function openDeleteModal(fileName, companyName, companyCode) {
-      deleteFileName = { file: fileName, company: companyName + '(' + companyCode + ')' };
-      document.getElementById('deleteFileName').textContent = fileName;
-      document.getElementById('deleteModal').classList.add('show');
+      alert('删除功能暂不支持，请联系管理员');
     }
     
     // 关闭删除确认弹窗
     function closeDeleteModal() {
       document.getElementById('deleteModal').classList.remove('show');
-      deleteFileName = null;
     }
     
     // 确认删除
-    async function confirmDelete() {
-      if (!deleteFileName) return;
-      
-      try {
-        const investDirHandle = await getInvestDir();
-        const companyDirHandle = await investDirHandle.getDirectoryHandle(deleteFileName.company);
-        
-        // 删除文件
-        await companyDirHandle.removeEntry(deleteFileName.file);
-        
-        closeDeleteModal();
-        
-        // 刷新时间线
-        loadTimeline();
-        
-      } catch (err) {
-        document.getElementById('timelineResult').innerHTML = 
-          '<div class="alert alert-error">删除失败：' + err.message + '</div>';
-      }
+    function confirmDelete() {
+      closeDeleteModal();
     }
     
     // 打开编辑弹窗
-    async function openEditModal(fileName, companyName, companyCode) {
-      try {
-        const investDirHandle = await getInvestDir();
-        const companyDirHandle = await investDirHandle.getDirectoryHandle(companyName + '(' + companyCode + ')');
-        const fileHandle = await companyDirHandle.getFileHandle(fileName);
-        const file = await fileHandle.getFile();
-        const content = await file.text();
-        
-        currentEditFile = { file: fileName, company: companyName + '(' + companyCode + ')' };
-        document.getElementById('editContent').value = content;
-        document.getElementById('editModal').classList.add('show');
-        
-      } catch (err) {
-        alert('打开编辑失败：' + err.message);
-      }
+    function openEditModal(fileName, companyName, companyCode) {
+      alert('编辑功能暂不支持，请联系管理员');
     }
     
     // 从编辑弹窗删除日志
     function deleteFromEdit() {
-      if (!currentEditFile) return;
-      const file = currentEditFile.file;
-      const company = currentEditFile.company;
-      const companyMatch = company.match(/(.+)\((\d+)\)$/);
-      const companyName = companyMatch ? companyMatch[1] : company;
-      const companyCode = companyMatch ? companyMatch[2] : '';
-      closeEditModal();
-      openDeleteModal(file, companyName, companyCode);
+      alert('编辑功能暂不支持，请联系管理员');
     }
 
     // 关闭编辑弹窗
     function closeEditModal() {
       document.getElementById('editModal').classList.remove('show');
-      currentEditFile = null;
-      document.getElementById('editContent').value = '';
     }
     
     // 保存编辑
-    async function saveEdit() {
-      if (!currentEditFile) return;
-      
-      const newContent = document.getElementById('editContent').value;
-      
-      try {
-        const investDirHandle = await getInvestDir();
-        const companyDirHandle = await investDirHandle.getDirectoryHandle(currentEditFile.company);
-        const fileHandle = await companyDirHandle.getFileHandle(currentEditFile.file);
-        const writable = await fileHandle.createWritable();
-        await writable.write(newContent);
-        await writable.close();
-        
-        closeEditModal();
-        
-        // 刷新时间线
-        loadTimeline();
-        
-      } catch (err) {
-        alert('保存失败：' + err.message);
-      }
+    function saveEdit() {
+      alert('编辑功能暂不支持，请联系管理员');
     }
     
     // 页面加载时初始化
