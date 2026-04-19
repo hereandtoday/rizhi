@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>投资日志系统 - 本地文件版</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1170px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+    
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .header p {
+      opacity: 0.9;
+      font-size: 1.1em;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+    
+    .card h2 {
+      color: #333;
+      font-size: 1.3em;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #667eea;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .card h2 .icon {
+      font-size: 1.2em;
+    }
+    
+    .status-bar {
+      background: #f0f4ff;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9em;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .status-dot.active { background: #52c41a; }
+    .status-dot.inactive { background: #d9d9d9; }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      color: #555;
+      font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e8e8e8;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: border-color 0.3s;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .form-group textarea {
+      min-height: 200px;
+      font-family: "Consolas", "Monaco", monospace;
+      resize: vertical;
+    }
+    
+    /* 日期时间选择器样式 */
+    .datetime-input {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    
+    .datetime-input input[type="date"],
+    .datetime-input input[type="time"] {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e8e8e8;
+      border-radius: 8px;
+      font-size: 1em;
+      font-family: inherit;
+    }
+    
+    .datetime-input input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #666;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .btn-danger {
+      background: #ff4d4f;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #ff7875;
+    }
+    
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 0.9em;
+    }
+    
+    /* 下拉选择器样式 */
+    .stock-selector {
+      position: relative;
+    }
+    
+    .stock-selector input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e8e8e8;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: border-color 0.3s;
+    }
+    
+    .stock-selector input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .stock-selector input.has-value {
+      border-color: #52c41a;
+      background: #f6ffed;
+    }
+    
+    .stock-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 2px solid #667eea;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 100;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+      display: none;
+    }
+    
+    .stock-dropdown.show {
+      display: block;
+    }
+    
+    .stock-option {
+      padding: 12px 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .stock-option:last-child {
+      border-bottom: none;
+    }
+    
+    .stock-option:hover,
+    .stock-option.highlighted {
+      background: #f0f4ff;
+    }
+    
+    .stock-option.selected {
+      background: #e6f7ff;
+    }
+    
+    .stock-option-name {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .stock-option-code {
+      color: #888;
+      font-size: 0.9em;
+    }
+    
+    .stock-option-match {
+      font-size: 0.75em;
+      color: #667eea;
+      background: #f0f4ff;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    
+    .stock-empty {
+      padding: 16px;
+      text-align: center;
+      color: #999;
+    }
+    
+    .stock-selected {
+      margin-top: 8px;
+      padding: 12px 16px;
+      background: #f6ffed;
+      border: 1px solid #b7eb8f;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .stock-selected .name {
+      font-weight: 600;
+      color: #52c41a;
+    }
+    
+    .stock-selected .remove {
+      cursor: pointer;
+      color: #999;
+      font-size: 1.2em;
+    }
+    
+    .stock-selected .remove:hover {
+      color: #ff4d4f;
+    }
+    
+    /* 时间线布局 */
+    .timeline-container {
+      position: relative;
+      padding-left: 80px;
+    }
+    
+    .timeline-container::before {
+      content: '';
+      position: absolute;
+      left: 30px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, #667eea, #764ba2);
+    }
+    
+    /* ===== 时间线布局 ===== */
+    .timeline-container {
+      margin-top: 16px;
+    }
+
+    /* 年份分组 */
+    .timeline-year {
+      margin-bottom: 24px;
+    }
+
+    .timeline-year-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 2px solid #667eea;
+      margin-bottom: 12px;
+    }
+
+    .timeline-year-header .year-text {
+      font-size: 1.4em;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .timeline-year-header .year-count {
+      font-size: 0.8em;
+      color: #999;
+      margin-left: 4px;
+    }
+
+    .timeline-year-header .toggle-icon {
+      font-size: 0.8em;
+      color: #667eea;
+      transition: transform 0.2s;
+      margin-left: auto;
+    }
+
+    .timeline-year.collapsed .toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .timeline-year.collapsed .timeline-month {
+      display: none;
+    }
+
+    /* 月份分组 */
+    .timeline-month {
+      margin-bottom: 16px;
+      margin-left: 8px;
+    }
+
+    .timeline-month-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .timeline-month-header .month-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #764ba2;
+      flex-shrink: 0;
+    }
+
+    .timeline-month-header .month-text {
+      font-size: 1.05em;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .timeline-month-header .month-count {
+      font-size: 0.75em;
+      color: #aaa;
+    }
+
+    .timeline-month-header .toggle-icon-sm {
+      font-size: 0.7em;
+      color: #999;
+      transition: transform 0.2s;
+      margin-left: 4px;
+    }
+
+    .timeline-month.collapsed .toggle-icon-sm {
+      transform: rotate(-90deg);
+    }
+
+    .timeline-month.collapsed .timeline-month-body {
+      display: none;
+    }
+
+    /* 月内日志列表 */
+    .timeline-month-body {
+      margin-left: 4px;
+      padding-left: 0;
+    }
+
+    /* 单条日志行 */
+    .timeline-row {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      gap: 8px;
+      position: relative;
+    }
+
+    /* 圆点 */
+    .timeline-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #bbb;
+      flex-shrink: 0;
+      margin-top: 14px;
+    }
+
+    /* 日期标签 */
+    .timeline-date-label {
+      width: 36px;
+      flex-shrink: 0;
+      text-align: right;
+      padding-top: 10px;
+      margin-right: 0;
+    }
+
+    .timeline-date-label .day {
+      font-size: 0.85em;
+      font-weight: 500;
+      color: #999;
+      line-height: 1;
+    }
+
+    .timeline-card {
+      flex: 1;
+      padding-left: 16px;
+      min-width: 0;
+    }
+    
+    .log-item {
+      position: relative;
+      background: white;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow 0.2s, transform 0.15s;
+    }
+    
+    .log-item:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      transform: translateY(-1px);
+    }
+    
+    .log-item-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .log-item-company {
+      font-weight: 600;
+      color: #667eea;
+      font-size: 0.9em;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    
+    .log-item-company:hover {
+      text-decoration: underline;
+    }
+    
+    .log-item-type {
+      font-size: 0.75em;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: #f0f4ff;
+      color: #667eea;
+      white-space: nowrap;
+    }
+
+    .log-item-price {
+      font-size: 0.75em;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: #fff7e6;
+      color: #d48806;
+      white-space: nowrap;
+    }
+    
+    .log-item-title {
+      color: #333;
+      font-size: 0.9em;
+      font-weight: 500;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .log-item-meta {
+      display: none;
+    }
+    
+    .log-item-actions {
+      display: none;
+    }
+    
+    .log-item-preview {
+      padding: 16px;
+    }
+    
+    .log-item-preview .md-content {
+      color: #444;
+      line-height: 1.7;
+      font-size: 0.95em;
+    }
+    
+    .log-item-preview .md-content h1,
+    .log-item-preview .md-content h2,
+    .log-item-preview .md-content h3 {
+      margin: 16px 0 8px;
+      color: #333;
+    }
+    
+    .log-item-preview .md-content h1 { font-size: 1.3em; }
+    .log-item-preview .md-content h2 { font-size: 1.2em; }
+    .log-item-preview .md-content h3 { font-size: 1.1em; }
+    
+    .log-item-preview .md-content p {
+      margin: 8px 0;
+    }
+    
+    .log-item-preview .md-content ul,
+    .log-item-preview .md-content ol {
+      margin: 8px 0;
+      padding-left: 24px;
+    }
+    
+    .log-item-preview .md-content li {
+      margin: 4px 0;
+    }
+    
+    .log-item-preview .md-content strong {
+      color: #333;
+      font-weight: 600;
+    }
+    
+    .log-item-preview .md-content code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: Consolas, monospace;
+      font-size: 0.9em;
+    }
+    
+    .log-item-preview .md-content pre {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    
+    .log-item-preview .md-content pre code {
+      background: none;
+      padding: 0;
+    }
+    
+    .log-item-preview .md-content blockquote {
+      border-left: 3px solid #667eea;
+      padding-left: 12px;
+      margin: 12px 0;
+      color: #666;
+    }
+    
+    .log-item-preview .md-content hr {
+      border: none;
+      border-top: 1px solid #e0e0e0;
+      margin: 16px 0;
+    }
+    
+    .log-item-preview .md-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 12px 0;
+    }
+    
+    .log-item-preview .md-content table th,
+    .log-item-preview .md-content table td {
+      border: 1px solid #e0e0e0;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    
+    .log-item-preview .md-content table th {
+      background: #f5f5f5;
+    }
+    
+    /* Markdown渲染样式 */
+    .log-item-preview .md-content {
+      color: #444;
+      line-height: 1.7;
+    }
+    
+    .log-item-preview .md-content h1,
+    .log-item-preview .md-content h2,
+    .log-item-preview .md-content h3 {
+      margin: 12px 0 8px;
+      color: #333;
+    }
+    
+    .log-item-preview .md-content h1 { font-size: 1.3em; }
+    .log-item-preview .md-content h2 { font-size: 1.2em; }
+    .log-item-preview .md-content h3 { font-size: 1.1em; }
+    
+    .log-item-preview .md-content p {
+      margin: 8px 0;
+    }
+    
+    .log-item-preview .md-content ul,
+    .log-item-preview .md-content ol {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+    
+    .log-item-preview .md-content li {
+      margin: 4px 0;
+    }
+    
+    .log-item-preview .md-content strong {
+      color: #333;
+      font-weight: 600;
+    }
+    
+    .log-item-preview .md-content code {
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: Consolas, monospace;
+      font-size: 0.9em;
+    }
+    
+    .log-item-preview .md-content blockquote {
+      border-left: 3px solid #667eea;
+      padding-left: 12px;
+      margin: 8px 0;
+      color: #666;
+    }
+    
+    .log-item-preview .md-content hr {
+      border: none;
+      border-top: 1px solid #e0e0e0;
+      margin: 12px 0;
+    }
+    
+    .log-item-preview .truncated {
+      display: none;
+    }
+    
+    .log-click-hint {
+      display: none;
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+      padding: 10px 20px;
+      border: none;
+      background: #f0f0f0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    
+    .tab-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .tab-btn:hover:not(.active) {
+      background: #e0e0e0;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+    
+    .empty-state .icon {
+      font-size: 3em;
+      margin-bottom: 16px;
+    }
+    
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .alert-success {
+      background: #f6ffed;
+      border: 1px solid #b7eb8f;
+      color: #52c41a;
+    }
+    
+    .alert-error {
+      background: #fff2f0;
+      border: 1px solid #ffccc7;
+      color: #ff4d4f;
+    }
+    
+    .alert-info {
+      background: #f0f5ff;
+      border: 1px solid #adc6ff;
+      color: #597ef7;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .modal.show {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      max-width: 845px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .modal-title {
+      font-size: 1.2em;
+      font-weight: 600;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+      color: #999;
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    /* 自选股列表展示 - 每行5个 */
+    .watchlist-display {
+      margin-top: 16px;
+    }
+    
+    .watchlist-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .watchlist-item {
+      flex: 0 0 calc(20% - 7px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #fafafa;
+      border-radius: 8px;
+      border-left: 3px solid #52c41a;
+      box-sizing: border-box;
+    }
+    
+    .watchlist-item-name {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .watchlist-item-code {
+      color: #888;
+      font-size: 0.9em;
+      margin-left: 8px;
+    }
+    
+    .watchlist-empty {
+      text-align: center;
+      padding: 30px;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>投资日志系统</h1>
+      <p>本地文件版 - 数据仅存储在您的电脑中</p>
+    </div>
+    
+    <div class="status-bar">
+      <div class="status-item">
+        <span class="status-dot inactive" id="statusDot"></span>
+        <span id="statusText">点击选择工作目录</span>
+      </div>
+      <div class="status-item" id="folderStatus" style="display: none;">
+        <span id="folderPath"></span>
+      </div>
+      <button class="btn btn-primary btn-sm" id="selectDirBtn" onclick="selectDirectory()">
+        选择目录
+      </button>
+    </div>
+    
+    <div class="card">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="watchlist">自选股管理</button>
+        <button class="tab-btn" data-tab="log">写投资日志</button>
+        <button class="tab-btn" data-tab="timeline">日志时间线</button>
+      </div>
+      
+      <!-- 自选股管理页面 -->
+      <div class="tab-content active" id="tab-watchlist">
+        <div class="form-group">
+          <label>搜索股票（输入名称、拼音首字母或代码）</label>
+          <div class="stock-selector" id="watchlistSelector">
+            <input type="text" id="watchlistSearch" placeholder="输入关键词搜索..." autocomplete="off">
+            <div class="stock-dropdown" id="watchlistDropdown"></div>
+          </div>
+          <div id="watchlistSelectedDisplay"></div>
+        </div>
+        <button class="btn btn-primary" id="watchlistAddBtn" onclick="addToWatchlist()" style="display: none;">
+          添加到自选股
+        </button>
+        <div id="watchlistResult"></div>
+        <div class="watchlist-display" id="watchlistDisplay"></div>
+      </div>
+      
+      <!-- 写投资日志页面 -->
+      <div class="tab-content" id="tab-log">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="form-group" style="flex:2;min-width:180px;">
+            <label>选择公司</label>
+            <div class="stock-selector" id="logSelector">
+              <input type="text" id="logSearch" placeholder="输入关键词搜索..." autocomplete="off">
+              <div class="stock-dropdown" id="logDropdown"></div>
+            </div>
+            <div id="logSelectedDisplay"></div>
+          </div>
+          <div class="form-group" style="flex:0 0 140px;">
+            <label>日志类型</label>
+            <select id="logType">
+              <option value="投资决策">投资决策</option>
+              <option value="买入记录">买入记录</option>
+              <option value="持有变动">持有变动</option>
+              <option value="投后复盘">投后复盘</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:0 0 190px;">
+            <label>记录时间</label>
+            <input type="datetime-local" id="logDatetime" step="1">
+          </div>
+          <div class="form-group" style="flex:0 0 130px;">
+            <label>当前股价（元）</label>
+            <input type="number" id="logPrice" placeholder="1780.00" step="0.01">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>日志内容（Markdown格式）</label>
+          <textarea id="logContent" style="min-height:390px;" placeholder="在此输入您的投资笔记...&#10;&#10;支持Markdown格式：&#10;# 标题&#10;**加粗** &#10;- 列表项"></textarea>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="saveLog()">保存日志</button>
+          <button class="btn btn-secondary" onclick="clearLogForm()">清空</button>
+        </div>
+        <div id="logResult"></div>
+      </div>
+      
+      <!-- 日志时间线页面 -->
+      <div class="tab-content" id="tab-timeline">
+        <div class="form-group">
+          <label>选择公司（可选，从自选股中筛选）</label>
+          <div class="stock-selector" id="timelineSelector">
+            <input type="text" id="timelineSearch" placeholder="输入关键词筛选公司..." autocomplete="off">
+            <div class="stock-dropdown" id="timelineDropdown"></div>
+          </div>
+          <div id="timelineSelectedDisplay"></div>
+        </div>
+        <div id="timelineResult"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 删除确认弹窗 -->
+  <div class="modal" id="deleteModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">确认删除</span>
+        <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+      </div>
+      <p style="margin-bottom: 16px;">确定要删除这篇日志吗？此操作不可恢复。</p>
+      <div id="deleteFileName" style="font-weight: 600; margin-bottom: 16px;"></div>
+      <div class="btn-group">
+        <button class="btn btn-danger" onclick="confirmDelete()">确认删除</button>
+        <button class="btn btn-secondary" onclick="closeDeleteModal()">取消</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 编辑日志弹窗 -->
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">编辑日志</span>
+        <button class="modal-close" onclick="closeEditModal()">&times;</button>
+      </div>
+      <div class="form-group">
+        <textarea id="editContent" style="min-height: 507px;"></textarea>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="saveEdit()">保存修改</button>
+        <button class="btn btn-danger" onclick="deleteFromEdit()">删除日志</button>
+        <button class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="stocks.js?v=20260418"></script>
+  <script>
+    // 常量
+    const STORAGE_KEY_DIR = 'invest_log_handle';
+    
+    // 全局状态
+    let rootDirHandle = null;
+    let pendingHandle = null;
+    let currentEditFile = null;
+    let deleteFileName = null;
+    let currentTimelineStock = null;
+    let cachedWatchlist = []; // 缓存自选股列表
+    let isInitialized = false;
+    
+    // 下拉选择器状态
+    const selectors = {
+      watchlist: { 
+        input: null, dropdown: null, selectedDisplay: null, addBtn: null,
+        selected: null, highlightIndex: -1, results: [], isOpen: false, source: 'all' 
+      },
+      log: { 
+        input: null, dropdown: null, selectedDisplay: null,
+        selected: null, highlightIndex: -1, results: [], isOpen: false, source: 'all' 
+      },
+      timeline: { 
+        input: null, dropdown: null, selectedDisplay: null,
+        selected: null, highlightIndex: -1, results: [], isOpen: false, source: 'watchlist' 
+      }
+    };
+    
+    // IndexedDB 数据库名
+    const DB_NAME = 'InvestLogDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'handles';
+    
+    // 打开 IndexedDB
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        };
+      });
+    }
+    
+    // 保存目录句柄到 IndexedDB
+    async function saveHandle(handle) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.put(handle, 'rootDir');
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve();
+      });
+    }
+    
+    // 从 IndexedDB 获取目录句柄
+    async function getSavedHandle() {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.get('rootDir');
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+    }
+    
+    // 获取投资日志目录句柄（自动创建）
+    async function getInvestDir() {
+      if (!rootDirHandle) return null;
+      return await rootDirHandle.getDirectoryHandle('投资日志', { create: true });
+    }
+
+    // 清除保存的句柄
+    async function clearHandle() {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.delete('rootDir');
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve();
+      });
+    }
+    
+    // 选择工作目录
+    async function selectDirectory() {
+      try {
+        // 如果有暂存的句柄，优先尝试重新授权（用户手势触发，可以请求权限）
+        if (pendingHandle) {
+          const permission = await pendingHandle.requestPermission({ mode: 'readwrite' });
+          if (permission === 'granted') {
+            await initSystem(pendingHandle);
+            pendingHandle = null;
+            return;
+          }
+          // 授权失败，清除暂存，继续让用户重新选择
+          pendingHandle = null;
+        }
+        
+        // 让用户选择新目录
+        const handle = await window.showDirectoryPicker();
+        
+        // 保存句柄到 IndexedDB（持久化存储）
+        await saveHandle(handle);
+        
+        // 初始化系统
+        await initSystem(handle);
+        
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          document.getElementById('statusText').textContent = '选择失败';
+          console.error('选择目录失败:', err);
+        }
+      }
+    }
+    
+    // 页面加载时检查是否有已保存的目录
+    async function checkPersistedState() {
+      try {
+        // 尝试获取已保存的目录句柄
+        const handle = await getSavedHandle();
+        
+        if (handle) {
+          // 验证权限是否仍然有效
+          const permission = await handle.queryPermission({ mode: 'readwrite' });
+          
+          if (permission === 'granted') {
+            await initSystem(handle);
+            return;
+          }
+          
+          // 权限不是 granted，需要用户交互才能重新获取
+          // 将句柄暂存，等用户点击按钮时尝试请求权限
+          pendingHandle = handle;
+          
+          if (permission === 'prompt') {
+            document.getElementById('statusText').textContent = '请点击"选择目录"重新授权';
+          } else {
+            // permission === 'denied'
+            document.getElementById('statusText').textContent = '权限已失效，请重新选择目录';
+            pendingHandle = null;
+            await clearHandle();
+          }
+          return;
+        }
+        
+        // 没有保存的目录
+        document.getElementById('statusText').textContent = '请点击按钮选择目录';
+        
+      } catch (err) {
+        console.log('检查持久化状态失败:', err);
+        document.getElementById('statusText').textContent = '请点击按钮选择目录';
+        await clearHandle();
+      }
+    }
+    
+    // 初始化选择器
+    function initSelectors() {
+      // 自选股选择器
+      selectors.watchlist.input = document.getElementById('watchlistSearch');
+      selectors.watchlist.dropdown = document.getElementById('watchlistDropdown');
+      selectors.watchlist.selectedDisplay = document.getElementById('watchlistSelectedDisplay');
+      selectors.watchlist.addBtn = document.getElementById('watchlistAddBtn');
+      
+      // 日志选择器
+      selectors.log.input = document.getElementById('logSearch');
+      selectors.log.dropdown = document.getElementById('logDropdown');
+      selectors.log.selectedDisplay = document.getElementById('logSelectedDisplay');
+      
+      // 时间线选择器
+      selectors.timeline.input = document.getElementById('timelineSearch');
+      selectors.timeline.dropdown = document.getElementById('timelineDropdown');
+      selectors.timeline.selectedDisplay = document.getElementById('timelineSelectedDisplay');
+      
+      // 绑定事件
+      bindSelectorEvents('watchlist');
+      bindSelectorEvents('log');
+      bindSelectorEvents('timeline');
+    }
+    
+    // 绑定选择器事件
+    function bindSelectorEvents(name) {
+      const sel = selectors[name];
+      if (!sel.input) return;
+      
+      // 输入事件
+      sel.input.addEventListener('input', (e) => {
+        handleSelectorInput(name, e.target.value);
+      });
+      
+      // 键盘事件
+      sel.input.addEventListener('keydown', (e) => {
+        handleSelectorKeydown(name, e);
+      });
+      
+      // 点击外部关闭
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest(`#${name}Selector`)) {
+          closeSelector(name);
+        }
+      });
+    }
+    
+    // 处理选择器输入
+    function handleSelectorInput(name, value) {
+      const sel = selectors[name];
+      sel.selected = null;
+      sel.highlightIndex = -1;
+      
+      // 更新显示
+      if (sel.selectedDisplay) {
+        sel.selectedDisplay.innerHTML = '';
+      }
+      if (sel.addBtn) {
+        sel.addBtn.style.display = 'none';
+      }
+      if (sel.input) {
+        sel.input.classList.remove('has-value');
+      }
+      
+      if (!value.trim()) {
+        closeSelector(name);
+        return;
+      }
+      
+      // 搜索股票
+      let results;
+      if (sel.source === 'watchlist') {
+        // 仅从自选股搜索
+        results = searchFromWatchlist(value, 15);
+      } else {
+        // 先搜自选股，再搜全量股票库，合并去重
+        const watchlistResults = searchFromWatchlist(value, 15);
+        const allResults = searchStocksMulti(value, 15);
+        const seen = new Set(watchlistResults.map(s => s.code));
+        const extraResults = allResults.filter(s => !seen.has(s.code));
+        results = [...watchlistResults, ...extraResults].slice(0, 15);
+      }
+      sel.results = results;
+      
+      if (results.length > 0) {
+        renderDropdown(name, results);
+        openSelector(name);
+      } else {
+        closeSelector(name);
+      }
+    }
+    
+    // 从自选股搜索
+    function searchFromWatchlist(query, maxResults = 15) {
+      if (!query || query.trim() === "" || cachedWatchlist.length === 0) return [];
+      const q = query.toUpperCase().trim();
+      const results = [];
+      
+      // 从自选股中搜索
+      cachedWatchlist.forEach(stock => {
+        if (results.length >= maxResults) return;
+        
+        const nameMatch = stock.name.startsWith(query) || stock.name.toUpperCase().startsWith(q);
+        const pinyinMatch = stock.pinyin && stock.pinyin.toUpperCase().startsWith(q);
+        const codeMatch = stock.code.includes(query);
+        
+        if (nameMatch) {
+          results.push({ ...stock, matchType: 'name' });
+        } else if (pinyinMatch) {
+          results.push({ ...stock, matchType: 'pinyin' });
+        } else if (codeMatch) {
+          results.push({ ...stock, matchType: 'code' });
+        }
+      });
+      
+      return results;
+    }
+    
+    // 更新自选股缓存
+    async function updateWatchlistCache() {
+      if (!rootDirHandle) {
+        cachedWatchlist = [];
+        return;
+      }
+      
+      try {
+        const investDirHandle = await getInvestDir();
+        const watchlistFileHandle = await investDirHandle.getFileHandle('自选股列表.md');
+        const file = await watchlistFileHandle.getFile();
+        const content = await file.text();
+        
+        // 解析自选股
+        const lines = content.split('\n');
+        cachedWatchlist = [];
+        
+        lines.forEach(line => {
+          const match = line.match(/^-\s*(.+)\((\d{6,8})\)/);
+          if (match) {
+            // 尝试从全量股票池获取拼音
+            const globalStock = HS300_STOCKS.find(s => s.code === match[2]);
+            cachedWatchlist.push({
+              name: match[1],
+              code: match[2],
+              pinyin: globalStock ? globalStock.pinyin : match[1].charAt(0)
+            });
+          }
+        });
+      } catch (err) {
+        console.error('更新自选股缓存失败:', err);
+        cachedWatchlist = [];
+      }
+    }
+    
+    // 渲染下拉列表
+    function renderDropdown(name, results) {
+      const sel = selectors[name];
+      let html = '';
+      
+      results.forEach((stock, index) => {
+        const matchLabel = stock.matchType === 'name' ? '名称' : 
+                          stock.matchType === 'pinyin' ? '拼音' : '代码';
+        html += `
+          <div class="stock-option" data-index="${index}" data-name="${stock.name}" data-code="${stock.code}">
+            <div>
+              <span class="stock-option-name">${stock.name}</span>
+              <span class="stock-option-code">(${stock.code})</span>
+            </div>
+            <span class="stock-option-match">${matchLabel}匹配</span>
+          </div>
+        `;
+      });
+      
+      sel.dropdown.innerHTML = html;
+      
+      // 绑定点击事件
+      sel.dropdown.querySelectorAll('.stock-option').forEach(option => {
+        option.addEventListener('click', () => {
+          const index = parseInt(option.dataset.index);
+          selectStock(name, index);
+        });
+      });
+    }
+    
+    // 处理键盘导航
+    function handleSelectorKeydown(name, e) {
+      const sel = selectors[name];
+      
+      if (!sel.isOpen || sel.results.length === 0) {
+        // 如果下拉未打开，按下箭头时打开
+        if (e.key === 'ArrowDown' && sel.input.value.trim()) {
+          if (sel.source === 'watchlist') {
+            sel.results = searchFromWatchlist(sel.input.value, 15);
+          } else {
+            sel.results = searchStocksMulti(sel.input.value, 15);
+          }
+          if (sel.results.length > 0) {
+            renderDropdown(name, sel.results);
+            openSelector(name);
+            highlightOption(name, 0);
+          }
+          e.preventDefault();
+        }
+        return;
+      }
+      
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          if (sel.highlightIndex < sel.results.length - 1) {
+            highlightOption(name, sel.highlightIndex + 1);
+          }
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          if (sel.highlightIndex > 0) {
+            highlightOption(name, sel.highlightIndex - 1);
+          }
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (sel.highlightIndex >= 0) {
+            selectStock(name, sel.highlightIndex);
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          closeSelector(name);
+          break;
+      }
+    }
+    
+    // 高亮选项
+    function highlightOption(name, index) {
+      const sel = selectors[name];
+      sel.highlightIndex = index;
+      
+      sel.dropdown.querySelectorAll('.stock-option').forEach((opt, i) => {
+        opt.classList.toggle('highlighted', i === index);
+      });
+      
+      // 滚动到可见区域
+      const highlighted = sel.dropdown.querySelector('.highlighted');
+      if (highlighted) {
+        highlighted.scrollIntoView({ block: 'nearest' });
+      }
+    }
+    
+    // 选择股票
+    function selectStock(name, index) {
+      const sel = selectors[name];
+      const stock = sel.results[index];
+      if (!stock) return;
+      
+      sel.selected = stock;
+      sel.results = [];
+      sel.isOpen = false;
+      
+      // 更新输入框
+      sel.input.value = stock.name + '(' + stock.code + ')';
+      sel.input.classList.add('has-value');
+      
+      // 显示已选择
+      if (sel.selectedDisplay) {
+        sel.selectedDisplay.innerHTML = `
+          <div class="stock-selected">
+            <span><span class="name">${stock.name}</span> <span style="color:#888">(${stock.code})</span></span>
+            <span class="remove" onclick="clearSelection('${name}')">&times;</span>
+          </div>
+        `;
+      }
+      
+      // 自选股页面显示添加按钮
+      if (name === 'watchlist' && sel.addBtn) {
+        sel.addBtn.style.display = 'inline-block';
+      }
+      
+      closeSelector(name);
+      
+      // 自选股页面需要额外处理
+      if (name === 'watchlist') {
+        loadWatchlist();
+      }
+      
+      // 时间线页面选择公司后自动加载该公司日志
+      if (name === 'timeline') {
+        loadTimeline();
+      }
+    }
+    
+    // 清除选择
+    function clearSelection(name) {
+      const sel = selectors[name];
+      sel.selected = null;
+      sel.input.value = '';
+      sel.input.classList.remove('has-value');
+      if (sel.selectedDisplay) {
+        sel.selectedDisplay.innerHTML = '';
+      }
+      if (sel.addBtn) {
+        sel.addBtn.style.display = 'none';
+      }
+    }
+    
+    // 打开下拉
+    function openSelector(name) {
+      const sel = selectors[name];
+      sel.isOpen = true;
+      sel.dropdown.classList.add('show');
+    }
+    
+    // 关闭下拉
+    function closeSelector(name) {
+      const sel = selectors[name];
+      sel.isOpen = false;
+      sel.highlightIndex = -1;
+      if (sel.dropdown) {
+        sel.dropdown.classList.remove('show');
+      }
+    }
+    
+    // 切换标签页
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        switchTab(btn.dataset.tab);
+      });
+    });
+    
+    // 创建初始文件
+    async function createInitialFiles() {
+      // 创建投资日志目录
+      const investDirHandle = await getInvestDir();
+      
+      // 创建全量股票库文件
+      const stockFileHandle = await investDirHandle.getFileHandle('全量股票库.md', { create: true });
+      const stockFileWritable = await stockFileHandle.createWritable();
+      let stockContent = '# 全量股票库\n\n本文件包含沪深300成分股，可用于添加自选股。\n\n';
+      HS300_STOCKS.forEach(s => {
+        stockContent += '- ' + s.name + '(' + s.code + ') - ' + s.pinyin + '\n';
+      });
+      await stockFileWritable.write(stockContent);
+      await stockFileWritable.close();
+      
+      // 创建自选股列表文件
+      const watchlistFileHandle = await investDirHandle.getFileHandle('自选股列表.md', { create: true });
+      const watchlistFileWritable = await watchlistFileHandle.createWritable();
+      await watchlistFileWritable.write('# 自选股列表\n\n本文件记录您关注的股票。\n\n格式示例：\n- 贵州茅台(600519)\n\n');
+      await watchlistFileWritable.close();
+      
+      // 更新状态
+      updateStatus(true, rootDirHandle.name);
+      
+      // 初始化日期时间
+      initDatetimeInputs();
+      
+      // 更新自选股缓存
+      await updateWatchlistCache();
+      
+      // 加载自选股列表
+      loadWatchlist();
+      
+      // 自动跳转到时间线并加载
+      switchTab('timeline');
+      loadAllLogs();
+    }
+    
+    // 切换到指定标签
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
+      document.getElementById('tab-' + tabName).classList.add('active');
+      
+      // 切换到自选股页面时刷新列表
+      if (tabName === 'watchlist') {
+        loadWatchlist();
+      }
+      
+      // 切换到写日志页面时刷新时间
+      if (tabName === 'log') {
+        initDatetimeInputs();
+      }
+      
+      // 切换到时间线页面时默认加载所有日志
+      if (tabName === 'timeline') {
+        // 清空选择，尝试加载所有日志
+        clearSelection('timeline');
+        loadAllLogs();
+      }
+    }
+    
+    // 跳转到时间线并筛选指定公司
+    function goToTimelineAndFilter(stockName, stockCode) {
+      // 切换到时间线标签
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector('[data-tab="timeline"]').classList.add('active');
+      document.getElementById('tab-timeline').classList.add('active');
+      
+      // 更新选择器并筛选
+      selectors.timeline.selected = { name: stockName, code: stockCode };
+      selectors.timeline.input.value = stockName + '(' + stockCode + ')';
+      selectors.timeline.input.classList.add('has-value');
+      selectors.timeline.selectedDisplay.innerHTML = `
+        <div class="stock-selected">
+          <span><span class="name">${stockName}</span> <span style="color:#888">(${stockCode})</span></span>
+          <span class="remove" onclick="clearSelection('timeline'); loadAllLogs();">&times;</span>
+        </div>
+      `;
+      
+      // 加载该公司日志
+      loadTimeline();
+    }
+    
+    // 初始化时间显示（自动填充当前时间，用户可修改）
+    function initDatetimeInputs() {
+      const now = new Date();
+      const dateStr = now.getFullYear() + '-' + 
+        String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(now.getDate()).padStart(2, '0');
+      const timeStr = String(now.getHours()).padStart(2, '0') + ':' + 
+        String(now.getMinutes()).padStart(2, '0') + ':' + 
+        String(now.getSeconds()).padStart(2, '0');
+      
+      const datetimeEl = document.getElementById('logDatetime');
+      if (datetimeEl) {
+        datetimeEl.value = dateStr + 'T' + timeStr;
+      }
+    }
+    
+    // 初始化系统
+    async function initSystem(existingHandle = null) {
+      try {
+        // 如果没有传入已存在的句柄，则让用户选择
+        if (!existingHandle) {
+          rootDirHandle = await window.showDirectoryPicker();
+          await saveHandle(rootDirHandle);
+        } else {
+          rootDirHandle = existingHandle;
+        }
+        
+        // 保存目录信息到 localStorage
+        localStorage.setItem(STORAGE_KEY_DIR, JSON.stringify({ name: rootDirHandle.name }));
+        
+        // 创建投资日志目录（如果不存在）
+        const investDirHandle = await getInvestDir();
+        
+        // 创建全量股票库文件（如果不存在）
+        try {
+          await investDirHandle.getFileHandle('全量股票库.md');
+        } catch {
+          const stockFileHandle = await investDirHandle.getFileHandle('全量股票库.md', { create: true });
+          const stockFileWritable = await stockFileHandle.createWritable();
+          let stockContent = '# 全量股票库\n\n本文件包含沪深300成分股，可用于添加自选股。\n\n';
+          HS300_STOCKS.forEach(s => {
+            stockContent += `- ${s.name}(${s.code}) - ${s.pinyin}\n`;
+          });
+          await stockFileWritable.write(stockContent);
+          await stockFileWritable.close();
+        }
+        
+        // 创建自选股列表文件（如果不存在）
+        try {
+          await investDirHandle.getFileHandle('自选股列表.md');
+        } catch {
+          const watchlistFileHandle = await investDirHandle.getFileHandle('自选股列表.md', { create: true });
+          const watchlistFileWritable = await watchlistFileHandle.createWritable();
+          await watchlistFileWritable.write('# 自选股列表\n\n本文件记录您关注的股票。\n\n格式示例：\n- 贵州茅台(600519)\n\n');
+          await watchlistFileWritable.close();
+        }
+        
+        // 更新状态
+        updateStatus(true, rootDirHandle.name);
+        
+        // 初始化日期时间
+        initDatetimeInputs();
+        
+        // 更新自选股缓存
+        await updateWatchlistCache();
+        
+        // 加载自选股列表
+        loadWatchlist();
+        
+        // 自动跳转到时间线并加载
+        switchTab('timeline');
+        loadAllLogs();
+        
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          document.getElementById('statusText').textContent = '初始化失败：' + err.message;
+          // 如果句柄无效，清除持久化状态
+          rootDirHandle = null;
+          await clearHandle();
+          updateStatus(false);
+        }
+      }
+    }
+    
+    // 更新状态栏
+    function updateStatus(active, folderName) {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      const folderStatus = document.getElementById('folderStatus');
+      const folderPath = document.getElementById('folderPath');
+      
+      if (active) {
+        dot.classList.remove('inactive');
+        dot.classList.add('active');
+        text.textContent = '已就绪';
+        folderStatus.style.display = 'flex';
+        folderPath.textContent = folderName + '/投资日志/';
+      } else {
+        dot.classList.remove('active');
+        dot.classList.add('inactive');
+        text.textContent = '未初始化';
+        folderStatus.style.display = 'none';
+      }
+    }
+    
+    // 加载自选股列表
+    async function loadWatchlist() {
+      if (!rootDirHandle) return;
+      
+      try {
+        const investDirHandle = await getInvestDir();
+        const watchlistFileHandle = await investDirHandle.getFileHandle('自选股列表.md');
+        const file = await watchlistFileHandle.getFile();
+        const content = await file.text();
+        
+        // 解析自选股
+        const lines = content.split('\n');
+        const stocks = [];
+        
+        lines.forEach(line => {
+          const match = line.match(/^-\s*(.+)\((\d{6,8})\)/);
+          if (match) {
+            stocks.push({ name: match[1], code: match[2] });
+          }
+        });
+        
+        // 更新缓存
+        cachedWatchlist = stocks.map(stock => {
+          const globalStock = HS300_STOCKS.find(s => s.code === stock.code);
+          return {
+            ...stock,
+            pinyin: globalStock ? globalStock.pinyin : stock.name.charAt(0)
+          };
+        });
+        
+        // 渲染列表
+        const display = document.getElementById('watchlistDisplay');
+        if (stocks.length === 0) {
+          display.innerHTML = '<div class="watchlist-empty">暂无自选股，请搜索添加</div>';
+        } else {
+          let html = '<div style="margin-bottom:8px;color:#888;">共 ' + stocks.length + ' 只自选股，点击公司名可查看其日志</div>';
+          html += '<div class="watchlist-grid">';
+          stocks.forEach(stock => {
+            html += `
+              <div class="watchlist-item">
+                <div style="cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" onclick="goToTimelineAndFilter('${stock.name}', '${stock.code}')">
+                  <span class="watchlist-item-name" style="color:#667eea;text-decoration:underline;">${stock.name}</span>
+                  <span class="watchlist-item-code">(${stock.code})</span>
+                </div>
+                <button class="btn btn-danger btn-sm" style="padding:2px 6px;font-size:0.7em;flex-shrink:0;margin-left:4px;" onclick="removeFromWatchlist('${stock.name}', '${stock.code}')">×</button>
+              </div>
+            `;
+          });
+          html += '</div>';
+          display.innerHTML = html;
+        }
+        
+      } catch (err) {
+        console.error('加载自选股失败:', err);
+      }
+    }
+    
+    // 添加到自选股
+    async function addToWatchlist() {
+      if (!rootDirHandle) {
+        document.getElementById('watchlistResult').innerHTML = 
+          '<div class="alert alert-error">请先进行初始化</div>';
+        return;
+      }
+      
+      const stock = selectors.watchlist.selected;
+      if (!stock) {
+        document.getElementById('watchlistResult').innerHTML = 
+          '<div class="alert alert-error">请先选择股票</div>';
+        return;
+      }
+      
+      try {
+        const investDirHandle = await getInvestDir();
+        const watchlistFileHandle = await investDirHandle.getFileHandle('自选股列表.md');
+        const file = await watchlistFileHandle.getFile();
+        let content = await file.text();
+        
+        // 检查是否已存在
+        const stockEntry = `- ${stock.name}(${stock.code})`;
+        if (content.includes(stockEntry)) {
+          document.getElementById('watchlistResult').innerHTML = 
+            '<div class="alert alert-info">' + stock.name + ' 已在自选股列表中</div>';
+          return;
+        }
+        
+        // 添加到文件
+        content += stockEntry + '\n';
+        const writable = await watchlistFileHandle.createWritable();
+        await writable.write(content);
+        await writable.close();
+        
+        document.getElementById('watchlistResult').innerHTML = 
+          '<div class="alert alert-success">成功添加 ' + stock.name + ' 到自选股</div>';
+        
+        // 清空选择
+        clearSelection('watchlist');
+        
+        // 更新自选股缓存
+        await updateWatchlistCache();
+        
+        // 刷新列表
+        loadWatchlist();
+        
+      } catch (err) {
+        document.getElementById('watchlistResult').innerHTML = 
+          '<div class="alert alert-error">添加失败：' + err.message + '</div>';
+      }
+    }
+    
+    // 从自选股中删除
+    async function removeFromWatchlist(name, code) {
+      if (!confirm('确定要将 ' + name + ' 从自选股中移除吗？')) return;
+      
+      try {
+        const investDirHandle = await getInvestDir();
+        const watchlistFileHandle = await investDirHandle.getFileHandle('自选股列表.md');
+        const file = await watchlistFileHandle.getFile();
+        let content = await file.text();
+        
+        // 删除对应行
+        const stockEntry = `- ${name}(${code})`;
+        content = content.replace(stockEntry + '\n', '');
+        
+        const writable = await watchlistFileHandle.createWritable();
+        await writable.write(content);
+        await writable.close();
+        
+        document.getElementById('watchlistResult').innerHTML = 
+          '<div class="alert alert-success">已将 ' + name + ' 从自选股中移除</div>';
+        
+        // 更新自选股缓存
+        await updateWatchlistCache();
+        
+        // 刷新列表
+        loadWatchlist();
+        
+      } catch (err) {
+        document.getElementById('watchlistResult').innerHTML = 
+          '<div class="alert alert-error">删除失败：' + err.message + '</div>';
+      }
+    }
+    
+    // 保存日志
+    async function saveLog() {
+      if (!rootDirHandle) {
+        document.getElementById('logResult').innerHTML = 
+          '<div class="alert alert-error">请先选择工作目录</div>';
+        return;
+      }
+      
+      const stock = selectors.log.selected;
+      const logType = document.getElementById('logType').value;
+      const logPrice = document.getElementById('logPrice').value;
+      const logContent = document.getElementById('logContent').value.trim();
+      
+      // 验证输入
+      if (!stock) {
+        document.getElementById('logResult').innerHTML = 
+          '<div class="alert alert-error">请先选择股票</div>';
+        return;
+      }
+      
+      if (!logContent) {
+        document.getElementById('logResult').innerHTML = 
+          '<div class="alert alert-error">请输入日志内容</div>';
+        return;
+      }
+      
+      // 获取记录时间（用户可选择，默认当前时间）
+      const datetimeVal = document.getElementById('logDatetime').value;
+      let logDate, logTime;
+      if (datetimeVal) {
+        // datetime-local format: "2026-04-18T14:30:22"
+        const [d, t] = datetimeVal.split('T');
+        logDate = d;
+        logTime = t;
+      } else {
+        const now = new Date();
+        logDate = now.getFullYear() + '-' + 
+          String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+          String(now.getDate()).padStart(2, '0');
+        logTime = String(now.getHours()).padStart(2, '0') + ':' + 
+          String(now.getMinutes()).padStart(2, '0') + ':' + 
+          String(now.getSeconds()).padStart(2, '0');
+      }
+      
+      try {
+        const investDirHandle = await getInvestDir();
+        
+        // 创建公司文件夹
+        const companyName = stock.name + '(' + stock.code + ')';
+        const companyDirHandle = await investDirHandle.getDirectoryHandle(companyName, { create: true });
+        
+        // 生成文件名（使用时间戳确保不覆盖）
+        // 格式：yyyy-MM-dd_类型_HH-mm-ss-SSS.md
+        const [year, month, day] = logDate.split('-');
+        const [hour, minute, second] = logTime.split(':');
+        const timestamp = Date.now() % 1000;
+        const fileName = `${year}-${month}-${day}_${logType}_${hour}-${minute}-${second}-${String(timestamp).padStart(3, '0')}.md`;
+        
+        // 生成文件内容
+        let fileContent = '# ' + logType + '\n\n';
+        fileContent += '公司：' + companyName + '\n';
+        fileContent += '时间：' + logDate + ' ' + logTime + '\n';
+        if (logPrice) {
+          fileContent += '股价：' + logPrice + '\n';
+        }
+        fileContent += '\n---\n\n';
+        fileContent += logContent;
+        
+        // 保存文件
+        const fileHandle = await companyDirHandle.getFileHandle(fileName, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(fileContent);
+        await writable.close();
+        
+        document.getElementById('logResult').innerHTML = 
+          '<div class="alert alert-success">已提交</div>';
+        
+        // 清空表单
+        clearLogForm();
+        
+        // 跳转到时间线页面并加载
+        switchTab('timeline');
+        
+      } catch (err) {
+        document.getElementById('logResult').innerHTML = 
+          '<div class="alert alert-error">保存失败：' + err.message + '</div>';
+      }
+    }
+    
+    // 清空日志表单
+    function clearLogForm() {
+      clearSelection('log');
+      document.getElementById('logPrice').value = '';
+      document.getElementById('logContent').value = '';
+      document.getElementById('logResult').innerHTML = '';
+      // 刷新时间为当前时间
+      initDatetimeInputs();
+    }
+    
+    // 按 年→月 分组渲染时间线
+    function renderGroupedTimeline(allLogs, headerHtml) {
+      // 按年月分组
+      const groups = {};
+      allLogs.forEach(log => {
+        const dateMatch = log.name.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (!dateMatch) return;
+        const year = dateMatch[1];
+        const month = dateMatch[2];
+        const day = dateMatch[3];
+        const key = year + '-' + month;
+        if (!groups[key]) groups[key] = { year, month, logs: [] };
+        groups[key].logs.push({ ...log, day });
+      });
+
+      // 排序：年月倒序
+      const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
+      let html = headerHtml;
+      html += '<div class="timeline-container">';
+
+      let currentYear = '';
+      sortedKeys.forEach(key => {
+        const g = groups[key];
+
+        // 年份分组头（新年份才显示）
+        if (g.year !== currentYear) {
+          if (currentYear !== '') html += '</div>'; // 关闭上一个 timeline-year
+          currentYear = g.year;
+          const yearLogs = sortedKeys.filter(k => k.startsWith(g.year))
+            .reduce((sum, k) => sum + groups[k].logs.length, 0);
+          html += '<div class="timeline-year">';
+          html += '<div class="timeline-year-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">';
+          html += '<span class="year-text">' + g.year + '年</span>';
+          html += '<span class="year-count">' + yearLogs + ' 篇</span>';
+          html += '<span class="toggle-icon">▼</span>';
+          html += '</div>';
+        }
+
+        // 月份分组
+        html += '<div class="timeline-month">';
+        html += '<div class="timeline-month-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">';
+        html += '<span class="month-dot"></span>';
+        html += '<span class="month-text">' + g.month + '月</span>';
+        html += '<span class="month-count">' + g.logs.length + ' 篇</span>';
+        html += '<span class="toggle-icon-sm">▼</span>';
+        html += '</div>';
+
+        html += '<div class="timeline-month-body">';
+
+        g.logs.forEach(log => {
+          const companyMatch = log.company.match(/(.+)\((\d+)\)/);
+          const companyName = companyMatch ? companyMatch[1] : log.company;
+          const companyCode = companyMatch ? companyMatch[2] : '';
+
+          // 从Markdown内容提取股价
+          const priceMatch = log.fullContent.match(/股价[：:]\s*([\d.]+)/);
+          const stockPrice = priceMatch ? priceMatch[1] : '';
+
+          html += '<div class="timeline-row">';
+          // 圆点
+          html += '<div class="timeline-dot"></div>';
+          // 日期
+          html += '<div class="timeline-date-label">';
+          html += '<div class="day">' + parseInt(log.day, 10) + '日</div>';
+          html += '</div>';
+          // 卡片
+          html += '<div class="timeline-card">';
+          html += '<div class="log-item" onclick="openEditModal(\'' + escapeAttr(log.name) + '\', \'' + escapeAttr(companyName) + '\', \'' + escapeAttr(companyCode) + '\')">';
+          html += '<div class="log-item-header">';
+          html += '<span class="log-item-company" onclick="event.stopPropagation(); goToTimelineAndFilter(\'' + escapeAttr(companyName) + '\', \'' + escapeAttr(companyCode) + '\')">' + escapeHtml(log.company) + '</span>';
+          if (log.logType) {
+            html += '<span class="log-item-type">' + escapeHtml(log.logType) + '</span>';
+          }
+          if (stockPrice) {
+            html += '<span class="log-item-price">' + stockPrice + '元</span>';
+          }
+          html += '</div>';
+          const bodyContent = log.fullContent.replace(/^#.*\n[\s\S]*?---\n/, '').trim();
+          const renderedContent = marked.parse(bodyContent);
+          html += '<div class="log-item-preview"><div class="md-content">' + renderedContent + '</div></div>';
+          html += '</div>'; // .log-item
+          html += '</div>'; // .timeline-card
+          html += '</div>'; // .timeline-row
+        });
+
+        html += '</div>'; // .timeline-month-body
+        html += '</div>'; // .timeline-month
+      });
+
+      if (currentYear !== '') html += '</div>'; // 关闭最后一个 timeline-year
+      html += '</div>'; // .timeline-container
+
+      document.getElementById('timelineResult').innerHTML = html;
+    }
+
+    // 加载所有日志（时间线默认显示）
+    async function loadAllLogs() {
+      if (!rootDirHandle) {
+        document.getElementById('timelineResult').innerHTML = 
+          '<div class="alert alert-error">请先选择工作目录</div>';
+        return;
+      }
+      
+      try {
+        const investDirHandle = await getInvestDir();
+        let allLogs = [];
+        
+        for await (const entry of investDirHandle.values()) {
+          if (entry.kind === 'directory') {
+            const companyName = entry.name;
+            try {
+              const companyDirHandle = await investDirHandle.getDirectoryHandle(companyName);
+              for await (const fileEntry of companyDirHandle.values()) {
+                if (fileEntry.kind === 'file' && fileEntry.name.endsWith('.md')) {
+                  const fileHandle = await companyDirHandle.getFileHandle(fileEntry.name);
+                  const file = await fileHandle.getFile();
+                  const content = await file.text();
+                  const typeMatch = fileEntry.name.match(/_(.+?)_\d/);
+                  const logType = typeMatch ? typeMatch[1] : '';
+                  allLogs.push({
+                    name: fileEntry.name,
+                    company: companyName,
+                    fullContent: content,
+                    logType: logType
+                  });
+                }
+              }
+            } catch (e) {}
+          }
+        }
+        
+        allLogs.sort((a, b) => b.name.localeCompare(a.name));
+        
+        if (allLogs.length === 0) {
+          document.getElementById('timelineResult').innerHTML = 
+            '<div class="empty-state"><div class="icon">📝</div><p>暂无日志记录</p><p style="margin-top:10px;font-size:0.9em;">去"写投资日志"页面创建第一篇日志吧</p></div>';
+          return;
+        }
+        
+        const headerHtml = '<div style="margin-bottom:12px;color:#888;font-size:0.9em;">共 ' + allLogs.length + ' 篇日志（' + new Set(allLogs.map(l => l.company)).size + ' 家公司）</div>';
+        renderGroupedTimeline(allLogs, headerHtml);
+        
+      } catch (err) {
+        document.getElementById('timelineResult').innerHTML = 
+          '<div class="alert alert-error">加载失败：' + err.message + '</div>';
+      }
+    }
+    
+    // HTML转义辅助函数
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function escapeAttr(str) {
+      return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+    
+    // 加载指定公司的时间线
+    async function loadTimeline() {
+      if (!rootDirHandle) {
+        document.getElementById('timelineResult').innerHTML = 
+          '<div class="alert alert-error">请先选择工作目录</div>';
+        return;
+      }
+      
+      const stock = selectors.timeline.selected;
+      if (!stock) {
+        loadAllLogs();
+        return;
+      }
+      
+      try {
+        const investDirHandle = await getInvestDir();
+        const companyName = stock.name + '(' + stock.code + ')';
+        
+        let logs = [];
+        
+        try {
+          const companyDirHandle = await investDirHandle.getDirectoryHandle(companyName);
+          
+          for await (const entry of companyDirHandle.values()) {
+            if (entry.kind === 'file' && entry.name.endsWith('.md')) {
+              const fileHandle = await companyDirHandle.getFileHandle(entry.name);
+              const file = await fileHandle.getFile();
+              const content = await file.text();
+              
+              const typeMatch = entry.name.match(/_(.+?)_\d/);
+              const logType = typeMatch ? typeMatch[1] : '';
+              
+              logs.push({
+                name: entry.name,
+                company: companyName,
+                fullContent: content,
+                logType: logType
+              });
+            }
+          }
+        } catch (e) {}
+        
+        logs.sort((a, b) => b.name.localeCompare(a.name));
+        
+        if (logs.length === 0) {
+          document.getElementById('timelineResult').innerHTML = 
+            '<div class="empty-state"><div class="icon">📝</div><p>' + escapeHtml(stock.name) + ' 暂无日志记录</p><p style="margin-top:10px;font-size:0.9em;">去"写投资日志"页面为该公司创建第一篇日志</p></div>';
+          return;
+        }
+        
+        const headerHtml = '<div style="margin-bottom:12px;color:#888;font-size:0.9em;">' + escapeHtml(stock.name) + ' 共有 ' + logs.length + ' 篇日志 <span style="color:#667eea;cursor:pointer;" onclick="loadAllLogs()">(查看全部)</span></div>';
+        renderGroupedTimeline(logs, headerHtml);
+        
+      } catch (err) {
+        document.getElementById('timelineResult').innerHTML = 
+          '<div class="alert alert-error">加载失败：' + err.message + '</div>';
+      }
+    }
+    
+    // 打开删除确认弹窗
+    function openDeleteModal(fileName, companyName, companyCode) {
+      deleteFileName = { file: fileName, company: companyName + '(' + companyCode + ')' };
+      document.getElementById('deleteFileName').textContent = fileName;
+      document.getElementById('deleteModal').classList.add('show');
+    }
+    
+    // 关闭删除确认弹窗
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').classList.remove('show');
+      deleteFileName = null;
+    }
+    
+    // 确认删除
+    async function confirmDelete() {
+      if (!deleteFileName) return;
+      
+      try {
+        const investDirHandle = await getInvestDir();
+        const companyDirHandle = await investDirHandle.getDirectoryHandle(deleteFileName.company);
+        
+        // 删除文件
+        await companyDirHandle.removeEntry(deleteFileName.file);
+        
+        closeDeleteModal();
+        
+        // 刷新时间线
+        loadTimeline();
+        
+      } catch (err) {
+        document.getElementById('timelineResult').innerHTML = 
+          '<div class="alert alert-error">删除失败：' + err.message + '</div>';
+      }
+    }
+    
+    // 打开编辑弹窗
+    async function openEditModal(fileName, companyName, companyCode) {
+      try {
+        const investDirHandle = await getInvestDir();
+        const companyDirHandle = await investDirHandle.getDirectoryHandle(companyName + '(' + companyCode + ')');
+        const fileHandle = await companyDirHandle.getFileHandle(fileName);
+        const file = await fileHandle.getFile();
+        const content = await file.text();
+        
+        currentEditFile = { file: fileName, company: companyName + '(' + companyCode + ')' };
+        document.getElementById('editContent').value = content;
+        document.getElementById('editModal').classList.add('show');
+        
+      } catch (err) {
+        alert('打开编辑失败：' + err.message);
+      }
+    }
+    
+    // 从编辑弹窗删除日志
+    function deleteFromEdit() {
+      if (!currentEditFile) return;
+      const file = currentEditFile.file;
+      const company = currentEditFile.company;
+      const companyMatch = company.match(/(.+)\((\d+)\)$/);
+      const companyName = companyMatch ? companyMatch[1] : company;
+      const companyCode = companyMatch ? companyMatch[2] : '';
+      closeEditModal();
+      openDeleteModal(file, companyName, companyCode);
+    }
+
+    // 关闭编辑弹窗
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('show');
+      currentEditFile = null;
+      document.getElementById('editContent').value = '';
+    }
+    
+    // 保存编辑
+    async function saveEdit() {
+      if (!currentEditFile) return;
+      
+      const newContent = document.getElementById('editContent').value;
+      
+      try {
+        const investDirHandle = await getInvestDir();
+        const companyDirHandle = await investDirHandle.getDirectoryHandle(currentEditFile.company);
+        const fileHandle = await companyDirHandle.getFileHandle(currentEditFile.file);
+        const writable = await fileHandle.createWritable();
+        await writable.write(newContent);
+        await writable.close();
+        
+        closeEditModal();
+        
+        // 刷新时间线
+        loadTimeline();
+        
+      } catch (err) {
+        alert('保存失败：' + err.message);
+      }
+    }
+    
+    // 页面加载时检查是否有已保存的目录
+    window.addEventListener('load', async () => {
+      // 初始化选择器
+      initSelectors();
+      
+      // 初始化日期时间
+      initDatetimeInputs();
+      
+      // 检查是否支持 File System Access API
+      if (!('showDirectoryPicker' in window)) {
+        document.getElementById('statusText').textContent = '浏览器不支持';
+        document.getElementById('selectDirBtn').style.display = 'none';
+        return;
+      }
+      
+      // 尝试恢复持久化状态
+      await checkPersistedState();
+    });
+  </script>
+</body>
+</html>
