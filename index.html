@@ -1422,7 +1422,7 @@
         `;
         
         for (const month of Object.keys(yearLogs).sort().reverse()) {
-          const monthLogs = yearLogs[month];
+          const monthLogs = yearLogs[month].sort((a, b) => new Date(b.uploaded) - new Date(a.uploaded));
           
           html += `
             <div class="timeline-month">
@@ -1464,16 +1464,11 @@
                 }
               }
               
-              // 找到正文开始的位置（跳过标题和属性部分）
+              // 找到正文开始的位置：从"股价:"行之后开始
               for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
-                // 跳过标题行（以#开头）
-                if (line.startsWith('#')) continue;
-                // 跳过属性行（包含日期时间、股价等信息）
-                if (line.includes('日期时间:') || line.includes('股价:')) continue;
-                // 找到第一个非空非属性行，作为正文开始
-                if (line !== '') {
-                  contentStartIndex = i;
+                if (line.includes('股价:')) {
+                  contentStartIndex = i + 1;
                   break;
                 }
               }
