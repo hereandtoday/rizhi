@@ -1450,6 +1450,7 @@
               // 提取日志类型和正文内容
               const lines = markdownContent.split('\n');
               let logType = '投资决策';
+              let logPrice = '--';
               let contentStartIndex = -1;
               
               // 从标题中提取日志类型
@@ -1460,6 +1461,13 @@
                   const match = line.match(/#.*-\s*(.+)$/);
                   if (match && match[1]) {
                     logType = match[1].trim();
+                  }
+                }
+                // 提取股价
+                if (line.includes('股价:')) {
+                  const priceMatch = line.match(/股价:\s*(.+?)元/);
+                  if (priceMatch && priceMatch[1]) {
+                    logPrice = priceMatch[1].trim();
                   }
                 }
               }
@@ -1488,7 +1496,7 @@
                       <div class="log-item-header">
                         <span class="log-item-company">${companyName}</span>
                         <span class="log-item-type">${logType}</span>
-                        <span class="log-item-price">--元</span>
+                        <span class="log-item-price">${logPrice}元</span>
                       </div>
                       <div class="log-item-content">
                         <div class="md-content">
