@@ -2011,7 +2011,9 @@
     
     // 从编辑弹窗删除日志
     function deleteFromEdit() {
-      alert('编辑功能暂不支持，请联系管理员');
+      if (confirm('确定要删除这篇日志吗？此操作不可恢复。')) {
+        deleteLog(currentEditFile);
+      }
     }
 
     // 关闭编辑弹窗
@@ -2020,8 +2022,91 @@
     }
     
     // 保存编辑
-    function saveEdit() {
-      alert('编辑功能暂不支持，请联系管理员');
+    async function saveEdit() {
+      try {
+        const content = document.getElementById('editContent').value;
+        
+        // 从文件名中提取股票代码
+        const parts = currentEditFile.split('/');
+        const code = parts[0];
+        const stock = HS300_STOCKS.find(s => s.code === code);
+        const company = stock ? stock.name : code;
+        
+        // 从Markdown内容中提取信息
+        const lines = content.split('\n');
+        let type = '投资决策';
+        let datetime = new Date().toISOString().slice(0, 16);
+        let price = '';
+        
+        for (let line of lines) {
+          line = line.trim();
+          if (line.startsWith('#')) {
+            const match = line.match(/#.*-\s*(.+)$/);
+            if (match && match[1]) {
+              type = match[1].trim();
+            }
+          } else if (line.includes('日期时间:')) {
+            datetime = line.replace('日期时间:', '').trim();
+          } else if (line.includes('股价:')) {
+            price = line.replace('股价:', '').replace('元', '').trim();
+          }
+        }
+        
+        const response = await fetch(`${WORKER_API_URL}/api/update-log`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            filename: currentEditFile,
+            content: content.split('\n').slice(4).join('\n').trim(),
+            company,
+            code,
+            type,
+            datetime,
+            price
+          })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+          alert('日志更新成功');
+          closeEditModal();
+          loadAllLogs();
+        } else {
+          alert('更新失败: ' + (result.message || '未知错误'));
+        }
+      } catch (error) {
+        console.error('更新日志失败:', error);
+        alert('网络错误，请稍后重试');
+      }
+    }
+    
+    // 删除日志
+    async function deleteLog(filename) {
+      try {
+        const response = await fetch(`${WORKER_API_URL}/api/delete-log`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            filename
+          })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+          alert('日志删除成功');
+          closeEditModal();
+          loadAllLogs();
+        } else {
+          alert('删除失败: ' + (result.message || '未知错误'));
+        }
+      } catch (error) {
+        console.error('删除日志失败:', error);
+        alert('网络错误，请稍后重试');
+      }
     }
     
     // 页面加载时初始化

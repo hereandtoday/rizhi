@@ -106,6 +106,73 @@ ${content}`;
       }
     }
     
+    // 处理更新日志请求
+    if (path === '/api/update-log') {
+      if (request.method !== 'POST') {
+        return addCorsHeaders(new Response('Method not allowed', { status: 405 }));
+      }
+      
+      try {
+        const data = await request.json();
+        const { filename, content, company, code, type, datetime, price } = data;
+        
+        if (!filename || !content || !company || !code) {
+          return addCorsHeaders(new Response('Missing required fields', { status: 400 }));
+        }
+        
+        // 构建Markdown内容
+        const markdownContent = `# ${company} - ${type}
+        
+日期时间: ${datetime}
+股价: ${price || 'N/A'}元
+
+${content}`;
+        
+        // 上传到R2（覆盖原有文件）
+        await env.INVESTMENT_LOGS.put(filename, markdownContent);
+        
+        return addCorsHeaders(new Response(JSON.stringify({
+          success: true,
+          filename,
+          message: '日志更新成功'
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        }));
+      } catch (error) {
+        console.error('Update log error:', error);
+        return addCorsHeaders(new Response('Internal server error', { status: 500 }));
+      }
+    }
+    
+    // 处理删除日志请求
+    if (path === '/api/delete-log') {
+      if (request.method !== 'POST') {
+        return addCorsHeaders(new Response('Method not allowed', { status: 405 }));
+      }
+      
+      try {
+        const data = await request.json();
+        const { filename } = data;
+        
+        if (!filename) {
+          return addCorsHeaders(new Response('Missing required fields', { status: 400 }));
+        }
+        
+        // 从R2删除文件
+        await env.INVESTMENT_LOGS.delete(filename);
+        
+        return addCorsHeaders(new Response(JSON.stringify({
+          success: true,
+          message: '日志删除成功'
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        }));
+      } catch (error) {
+        console.error('Delete log error:', error);
+        return addCorsHeaders(new Response('Internal server error', { status: 500 }));
+      }
+    }
+    
     return addCorsHeaders(new Response('Not found', { status: 404 }));
   }
 };
