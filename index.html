@@ -1363,8 +1363,14 @@
           let filteredLogs = result.logs;
           
           // 如果有选中的公司，筛选出该公司的日志
+          let selectedCode = null;
           if (selectors.timeline.selected) {
-            const selectedCode = selectors.timeline.selected.code;
+            selectedCode = selectors.timeline.selected.code;
+          } else if (selectors.watchlist.selected) {
+            selectedCode = selectors.watchlist.selected.code;
+          }
+          
+          if (selectedCode) {
             filteredLogs = result.logs.filter(log => log.name.startsWith(selectedCode + '/'));
           }
           
@@ -1445,15 +1451,21 @@
               const lines = markdownContent.split('\n');
               let contentStartIndex = -1;
               
+              // 找到正文开始的位置（跳过标题和属性部分）
               for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
-                if (line === '' && i + 1 < lines.length && lines[i + 1].trim() !== '') {
-                  contentStartIndex = i + 1;
+                // 跳过标题行（以#开头）
+                if (line.startsWith('#')) continue;
+                // 跳过属性行（包含日期时间、股价等信息）
+                if (line.includes('日期时间:') || line.includes('股价:')) continue;
+                // 找到第一个非空非属性行，作为正文开始
+                if (line !== '') {
+                  contentStartIndex = i;
                   break;
                 }
               }
               
-              const contentLines = contentStartIndex >= 0 ? lines.slice(contentStartIndex) : lines;
+              const contentLines = contentStartIndex >= 0 ? lines.slice(contentStartIndex) : [];
               const contentMarkdown = contentLines.join('\n');
               const htmlContent = marked.parse(contentMarkdown);
               
