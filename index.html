@@ -1313,52 +1313,6 @@
       });
     });
     
-    // 保存日志到Cloudflare R2
-    async function saveLog() {
-      const company = selectors.log.selected;
-      if (!company) {
-        document.getElementById('logResult').innerHTML = '<div class="alert alert-error">请选择公司</div>';
-        return;
-      }
-      
-      const content = document.getElementById('logContent').value;
-      const type = document.getElementById('logType').value;
-      const datetime = document.getElementById('logDatetime').value;
-      const price = document.getElementById('logPrice').value;
-      
-      if (!content) {
-        document.getElementById('logResult').innerHTML = '<div class="alert alert-error">请输入日志内容</div>';
-        return;
-      }
-      
-      try {
-        const response = await fetch(`${WORKER_API_URL}/api/save-log`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            content,
-            company,
-            type,
-            datetime,
-            price
-          })
-        });
-        
-        const result = await response.json();
-        if (result.success) {
-          document.getElementById('logResult').innerHTML = '<div class="alert alert-success">日志保存成功</div>';
-          clearLogForm();
-        } else {
-          document.getElementById('logResult').innerHTML = '<div class="alert alert-error">保存失败: ' + (result.message || '未知错误') + '</div>';
-        }
-      } catch (error) {
-        console.error('保存日志失败:', error);
-        document.getElementById('logResult').innerHTML = '<div class="alert alert-error">网络错误，请稍后重试</div>';
-      }
-    }
-    
     // 加载所有日志
     async function loadAllLogs() {
       try {
